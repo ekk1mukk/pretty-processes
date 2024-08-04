@@ -2,84 +2,52 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"strings"
+	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/shirou/gopsutil/process"
+	"github.com/shirou/gopsutil/v4/process"
 )
 
-const listHeight = 28
+var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
-var (
-	titleStyle        = lipgloss.NewStyle().Bold(true)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4).Background(lipgloss.Color(65))
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("#CA61C3")).Bold(true)
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-)
-
-type item string
-
-func (i item) FilterValue() string { return "" }
-
-type itemDelegate struct{}
-
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(item)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i)
-
-	fn := itemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
+// Define an item struct that implements the list.Item interface
+type item struct {
+	pid  int32
+	name string
 }
 
+// Implement the list.Item interface
+func (i item) Title() string       { return fmt.Sprintf("(%d) %s", i.pid, i.name) }
+func (i item) Description() string { return i.name }
+func (i item) FilterValue() string { return i.name }
+
+// Define the model struct for Bubble Tea
 type model struct {
 	list     list.Model
-	choice   string
 	quitting bool
 }
 
+// Init initializes the program
 func (m model) Init() tea.Cmd {
 	return nil
 }
 
+// Update handles incoming messages and updates the model state
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.list.SetWidth(msg.Width)
-		return m, nil
-
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "q", "ctrl+c":
+		switch msg.String() {
+		case "ctrl+c", "q":
 			m.quitting = true
 			return m, tea.Quit
-
-		case "enter":
-			i, ok := m.list.SelectedItem().(item)
-			if ok {
-				m.choice = string(i)
-			}
-			return m, tea.Quit
 		}
+	case tea.WindowSizeMsg:
+		h, v := docStyle.GetFrameSize()
+		m.list.SetSize(msg.Width-h, msg.Height-v)
 	}
 
 	var cmd tea.Cmd
@@ -87,36 +55,48 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
+// View renders the current view
 func (m model) View() string {
-	if m.choice != "" {
-		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
-	}
 	if m.quitting {
-		return quitTextStyle.Render("Not hungry? That’s cool.")
+		return "Bye!\n"
 	}
-	return "\n" + m.list.View()
+	return docStyle.Render(m.list.View())
 }
 
+// getProcesses retrieves and sorts the processes by PID in descending order
 func getProcesses() []list.Item {
-	processItems := []list.Item{}
+	var processItems []list.Item
 
 	processes, err := process.Processes()
-
 	if err != nil {
 		log.Fatalf("Error fetching processes: %s", err)
 	}
 
-	for index := len(processes) - 1; index >= 0; index-- {
-		proc := processes[index]
+	// Create a slice of processInfo to store PID and Name
+	type processInfo struct {
+		PID  int32
+		Name string
+	}
+
+	var processList []processInfo
+
+	for _, proc := range processes {
 		name, err := proc.Name()
-
-		username, err := proc.Username()
-
 		if err != nil {
 			log.Printf("Error fetching process name: %s", err)
 			continue
 		}
-		processItems = append(processItems, item(fmt.Sprintf("(%d) (%s) %s", proc.Pid, username, name)))
+		processList = append(processList, processInfo{PID: proc.Pid, Name: name})
+	}
+
+	// Sort the processList by PID in descending order
+	sort.Slice(processList, func(i, j int) bool {
+		return processList[i].PID > processList[j].PID
+	})
+
+	// Convert sorted processList to list.Items
+	for _, proc := range processList {
+		processItems = append(processItems, item{pid: proc.PID, name: proc.Name})
 	}
 
 	return processItems
@@ -125,19 +105,18 @@ func getProcesses() []list.Item {
 func main() {
 	items := getProcesses()
 
-	const defaultWidth = 20
-
-	l := list.New(items, itemDelegate{}, defaultWidth, listHeight)
+	// Initialize the Bubble Tea list with a delegate
+	delegate := list.NewDefaultDelegate()
+	l := list.New(items, delegate, 0, 0) // Set width and height to 0, allowing dynamic resizing
 	l.Title = "pretty-processes v0.0.1"
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.Styles.Title = titleStyle
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
+	l.SetShowStatusBar(true)    // Enable status bar for better UX
+	l.SetFilteringEnabled(true) // Enable filtering
 
 	m := model{list: l}
 
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	p := tea.NewProgram(m, tea.WithAltScreen())
+
+	if _, err := p.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
