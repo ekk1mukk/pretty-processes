@@ -33,7 +33,7 @@ func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 
 // Render renders the list item.
 func (d itemDelegate) Render(w io.Writer, m list.Model, index int, i list.Item) {
-	it, ok := i.(item)
+	it, ok := i.(processItem)
 	if !ok {
 		return
 	}
@@ -79,10 +79,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case refreshMsg:
 		filter := m.list.FilterInput.Value()
 
-		newItems := getProcesses()
-		m.list.SetItems(newItems)
-
-		m.list.FilterInput.SetValue(filter)
+		if filter == "" {
+			newItems := getProcesses()
+			m.list.SetItems(newItems)
+		}
 
 		m.list.Title = getTitle()
 

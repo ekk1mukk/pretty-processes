@@ -12,8 +12,8 @@ import (
 	"github.com/shirou/gopsutil/v4/process"
 )
 
-// item represents a single process entry in the list.
-type item struct {
+// processItem represents a single process entry in the list.
+type processItem struct {
 	pid          int32
 	name         string
 	cmdline      string
@@ -24,11 +24,11 @@ type item struct {
 	creationDate int64
 }
 
-// Title returns the formatted title for the list item.
-func (i item) Title() string { return fmt.Sprintf("(%d) %s", i.pid, i.name) }
+// Title returns the formatted title for the list processItem.
+func (i processItem) Title() string { return fmt.Sprintf("(%d) %s", i.pid, i.name) }
 
-// Description returns a formatted description for the list item, including RAM and CPU usage.
-func (i item) Description() string {
+// Description returns a formatted description for the list processItem, including RAM and CPU usage.
+func (i processItem) Description() string {
 	ramUsage := fmt.Sprintf("%.2f%%", i.ram)
 	ramAmount := formatBytes(i.ramAmount)
 	cpuUsage := fmt.Sprintf("%.2f%%", i.cpu)
@@ -36,8 +36,8 @@ func (i item) Description() string {
 	return fmt.Sprintf("CMD: %s\nRAM: %s (%s) | CPU: %s | PPID: %d | Creation date : %s", i.cmdline, ramUsage, ramAmount, cpuUsage, i.ppid, timeObj.Format("2006-01-01 15:04:05"))
 }
 
-// FilterValue returns the filterable string value for the list item.
-func (i item) FilterValue() string { return strconv.Itoa(int(i.pid)) + i.name + i.cmdline }
+// FilterValue returns the filterable string value for the list processItem.
+func (i processItem) FilterValue() string { return strconv.Itoa(int(i.pid)) + i.name }
 
 // getProcesses retrieves and returns a list of current processes.
 func getProcesses() []list.Item {
@@ -47,7 +47,7 @@ func getProcesses() []list.Item {
 		log.Fatalf("Error fetching processes: %s", err)
 	}
 
-	var processList []item
+	var processList []processItem
 
 	for _, proc := range processes {
 		name, err := proc.NameWithContext(ctx)
@@ -92,7 +92,7 @@ func getProcesses() []list.Item {
 			continue
 		}
 
-		processList = append(processList, item{
+		processList = append(processList, processItem{
 			pid:          proc.Pid,
 			name:         name,
 			cmdline:      cmdline,
