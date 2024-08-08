@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"sort"
 	"strconv"
-	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/shirou/gopsutil/v4/process"
@@ -22,18 +20,6 @@ type processItem struct {
 	cpu          float64
 	ppid         int32
 	creationDate int64
-}
-
-// Title returns the formatted title for the list processItem.
-func (i processItem) Title() string { return fmt.Sprintf("(%d) %s", i.pid, i.name) }
-
-// Description returns a formatted description for the list processItem, including RAM and CPU usage.
-func (i processItem) Description() string {
-	ramUsage := fmt.Sprintf("%.2f%%", i.ram)
-	ramAmount := formatBytes(i.ramAmount)
-	cpuUsage := fmt.Sprintf("%.2f%%", i.cpu)
-	timeObj := time.Unix(i.creationDate/1000, 0)
-	return fmt.Sprintf("CMD: %s\nRAM: %s (%s) | CPU: %s | PPID: %d | Creation date : %s", i.cmdline, ramUsage, ramAmount, cpuUsage, i.ppid, timeObj.Format("2006-01-01 15:04:05"))
 }
 
 // FilterValue returns the filterable string value for the list processItem.
