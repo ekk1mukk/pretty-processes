@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -14,7 +13,7 @@ import (
 
 var (
 	appStyle   = lipgloss.NewStyle().PaddingLeft(2)
-	titleStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).MarginLeft(2).MarginTop(1).Underline(true)
+	titleStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).MarginTop(0).Underline(true).Blink(true)
 
 	selectedItemTitleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#D81159")).Bold(true)
 	selectedItemDescStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#D81159")).Bold(true)
@@ -58,9 +57,6 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, i list.Item) 
 	creationDate := it.creationDate
 	cmdline := it.cmdline
 
-	// Combine formatted data into a single string
-	//combined := fmt.Sprintf("%s %s %s %s %s", pid, name, ram, cpu, cmdline)
-
 	// Apply bold style to the entire line if the item is selected
 	var styledLine string
 	if index == m.Index() {
@@ -94,7 +90,6 @@ type refreshMsg struct{}
 type model struct {
 	title    string
 	list     list.Model
-	keys     keyMap
 	help     help.Model
 	quitting bool
 }
@@ -108,16 +103,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		// Calculate available height for the list
 		h, v := appStyle.GetFrameSize()
-		availableHeight := msg.Height - v - getTitleHeight() - lipgloss.Height(m.help.View(m.keys))
+		availableHeight := msg.Height - v - getTitleHeight() - lipgloss.Height(m.help.View(customKeys))
 		m.list.SetSize(msg.Width-h, availableHeight)
 		return m, nil
 
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keys.Help):
-			//m.help.ShowAll = !m.help.ShowAll
-			return m, nil
-		case key.Matches(msg, m.keys.Quit):
+		case msg.String() == "ctrl+c":
 			m.quitting = true
 			return m, tea.Quit
 		}
@@ -131,7 +123,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SetItems(newItems)
 		}
 
-		m.title = getTitle()
+		m.list.Title = getTitle()
 
 		return m, m.refreshProcesses()
 	}
@@ -147,16 +139,16 @@ func (m model) View() string {
 	}
 
 	// Render title at the top
-	titleView := titleStyle.Render(m.title)
+	//titleView := titleStyle.Render(m.list.Title)
+	m.list.Styles.Title = titleStyle
 	listView := appStyle.Render(m.list.View())
-	helpView := appStyle.Render(m.help.View(m.keys))
 
-	return fmt.Sprintf("%s\n%s\n%s", titleView, listView, helpView)
+	return fmt.Sprintf("%s\n", listView)
 }
 
 func (m *model) refreshProcesses() tea.Cmd {
 	return func() tea.Msg {
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 		return refreshMsg{}
 	}
 }
