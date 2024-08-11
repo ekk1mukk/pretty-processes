@@ -13,7 +13,7 @@ import (
 
 var (
 	appStyle   = lipgloss.NewStyle().PaddingLeft(2)
-	titleStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).MarginTop(0).Underline(true).Blink(true)
+	titleStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFFFFF")).MarginTop(1).Underline(true).Blink(true)
 
 	selectedItemTitleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#D81159")).Bold(true)
 	selectedItemDescStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#D81159")).Bold(true)

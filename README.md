@@ -1,6 +1,6 @@
 # pretty-processes
 
-### TUI application for listing and managing linux processes. Very basic for now. Done with Bubble Tea.
+### TUI application for listing and managing linux processes. It uses [Bubble Tea](https://github.com/charmbracelet/bubbletea) for the interface and [gopsutil](https://github.com/shirou/gopsutil) to get processes.
 
 ### Available :
   - Listing of processes
@@ -9,5 +9,8 @@
 
 ### Not available yet :
   - Killing a selected process
-  - Sorting by any parameters
+  - Sorting
   - Filtering by a choosen parameter
+
+
+![pretty-processes screenshot](./pretty-processes.png)
