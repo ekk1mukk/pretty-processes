@@ -110,7 +110,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case refreshMsg: //If possible in the future, only update the process showing at the current page
+	case refreshMsg: //If possible in the future, only update the processes displayed at the current page
 		filter := m.list.FilterInput.Value()
 		newItems := getProcesses()
 
