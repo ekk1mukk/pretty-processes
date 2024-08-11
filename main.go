@@ -37,7 +37,6 @@ func main() {
 	}
 }
 
-// getTitle returns the current time formatted as a string.
 func getTitle() string {
 	return fmt.Sprintf("pretty-processes v0.0.7 | %s", time.Now().Format("15:04:05"))
 }

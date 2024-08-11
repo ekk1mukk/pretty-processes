@@ -25,7 +25,7 @@ type processItem struct {
 // FilterValue returns the filterable string value for the list processItem.
 func (i processItem) FilterValue() string { return strconv.Itoa(int(i.pid)) + i.name }
 
-// getProcesses retrieves and returns a list of current processes.
+// getProcesses retrieves and returns a list of current processes with some data.
 func getProcesses() []list.Item {
 	ctx := context.Background()
 	processes, err := process.Processes()

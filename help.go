@@ -18,23 +18,24 @@ var customKeys = keyMap{
 	),
 }
 
-// ShortHelp returns keybindings for the minimal help view.
 func (k keyMap) GetCustomShortHelpCommands() []key.Binding {
 	return []key.Binding{
-		k.Kill, k.Sort,
+		//k.Kill, k.Sort,
 	}
 }
 
 func (k keyMap) GetCustomFullHelpCommands() []key.Binding {
 	return []key.Binding{
-		k.Kill, k.Sort,
+		//k.Kill, k.Sort,
 	}
 }
 
+//Here because Bubble Tea requires it
 func (k keyMap) FullHelp() [][]key.Binding {
 	return nil
 }
 
+//Here because Bubble Tea requires it
 func (k keyMap) ShortHelp() []key.Binding {
 	return nil
 }

@@ -49,7 +49,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, i list.Item) 
 		return
 	}
 
-	// Apply styles to different data types
+	// Apply styles
 	pid := fmt.Sprintf("%d", it.pid)
 	name := it.name
 	ram := fmt.Sprintf("RAM: %.2f%% (%s)", it.ram, formatBytes(it.ramAmount))
@@ -78,7 +78,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, i list.Item) 
 			cmdlineStyle.Render(cmdline))
 	}
 
-	fmt.Fprint(w, styledLine) // Use Fprint instead of Fprintln to avoid adding newlines
+	fmt.Fprint(w, styledLine)
 }
 
 func getTitleHeight() int {
@@ -118,7 +118,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		filter := m.list.FilterInput.Value()
 		newItems := getProcesses()
 
-		// Preserve filtering when refreshing items
+		// Temporarily disable update of list's items when there is a filter.
+		// The issue is that when an update occurs, all the selected processes from the filter disappear until the filtering is cancelled.
 		if filter == "" {
 			m.list.SetItems(newItems)
 		}
@@ -138,8 +139,6 @@ func (m model) View() string {
 		return "Bye!\n"
 	}
 
-	// Render title at the top
-	//titleView := titleStyle.Render(m.list.Title)
 	m.list.Styles.Title = titleStyle
 	listView := appStyle.Render(m.list.View())
 
