@@ -81,10 +81,6 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, i list.Item) 
 	fmt.Fprint(w, styledLine)
 }
 
-func getTitleHeight() int {
-	return lipgloss.Height(titleStyle.Render(getTitle()))
-}
-
 type refreshMsg struct{}
 
 type model struct {
@@ -103,7 +99,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		// Calculate available height for the list
 		h, v := appStyle.GetFrameSize()
-		availableHeight := msg.Height - v - getTitleHeight() - lipgloss.Height(m.help.View(customKeys))
+		availableHeight := msg.Height - v - lipgloss.Height(titleStyle.Render(getTitle())) - lipgloss.Height(m.help.View(customKeys))
 		m.list.SetSize(msg.Width-h, availableHeight)
 		return m, nil
 
@@ -114,7 +110,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case refreshMsg:
+	case refreshMsg: //If possible in the future, only update the process showing at the current page
 		filter := m.list.FilterInput.Value()
 		newItems := getProcesses()
 
